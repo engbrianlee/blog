@@ -5,6 +5,7 @@ import Header from "@/components/header/Header";
 import SectionContainer from "@/components/SectionContainer";
 import ThemeContext, { ThemeProvider } from "@/css/theme";
 import classNames from "classnames";
+import defaultTheme from "tailwindcss/defaultTheme";
 
 export default function App({ Component, pageProps }) {
   return (
@@ -41,7 +42,14 @@ export default function App({ Component, pageProps }) {
                 color="#696969"
               />
               <meta name="msapplication-TileColor" content="#ffffff" />
-              <meta name="theme-color" content="#ffffff" />
+              <meta
+                name="theme-color"
+                content={
+                  isDarkMode
+                    ? defaultTheme.colors.gray["900"]
+                    : defaultTheme.colors.pink["200"]
+                }
+              />
             </Head>
             <SectionContainer>
               <Header />

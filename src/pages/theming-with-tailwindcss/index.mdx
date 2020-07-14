@@ -41,6 +41,8 @@ It looks something like this:
 
 5. Keep the Console Developer Tools open and examine the DOM, keep toggling the switch, you should notice `class="dark"` being toggled on the root `html` element.
 
+6. The astute reader, if on mobile, might also notice their top notification bar also changing color. This is done by setting the `meta` tag's `theme-color` property.
+
 The observations above give us a good hint to how this site implemented its dark mode feature. Without further ado, let's jump in.
 
 ## A Simple Solution: CSS Variables
@@ -134,7 +136,7 @@ And that's it! Since your styles point to CSS Variables, all we need to do is fi
 
 ### Changing CSS Variables
 
-We've structured our CSS Variables such that they are contained within classes. This will allow us to change our CSS Variables but simply adding and removing the desired class from the root element. For example, let's say we want `theme-airbnb` in dark mode. We can simply add the classes `theme-airbnb` and `dark` to the root element. If you want to see this in action, check out my [personal site](https://engbrianlee.vercel.app/)
+We've structured our CSS Variables such that they are contained within classes. This will allow us to change our CSS Variables but simply adding and removing the desired class from the root element. For example, let's say we want `theme-airbnb` in dark mode. We can simply add the classes `theme-airbnb` and `dark` to the root element. If you want to see this in action, check out my [personal site](https://engbrianlee.vercel.app/).
 
 <Img src={lightAirbnb} alt="Light Theme" />
 <Img src={darkAirbnb} alt="Dark Theme" />
@@ -169,7 +171,7 @@ const useDarkMode = () => {
 
   // We need to do this client side and not in the state init above.
   // This is because when pre-rendering the page, prefersDarkMode will always be false
-  // since there is not way to get local storage or do a media query.
+  // since there is no way to get local storage or do a media query.
   // Since the page that is pre-rendered has prefersDarkMode false
   // the light theme styles will be pre-rendered and given to the client.
   // On the client, this hook will run but this time prefersDarkMode will potentially
@@ -278,9 +280,7 @@ export default function ToggleWithContext() {
 
 We can change styles with some simple checks. I recommend using the [classnames](https://www.npmjs.com/package/classnames) module as you will find creating template literals pretty unreadable as you add more variables.
 
-Fundamentally, since we use pure Javascript, we have the most flexibility. We can tailor the response of each component to whatever the current theme is. This is a great fit for components that have functional differences between themes as well as for integrating a theming solution into an existing project. If you only really care about changing colors I would recommend the above approach of CSS Variables.
-
-This was the approach taken for this site as it was forked from the [TailwindCSS Blog](https://github.com/tailwindcss/blog) and I didn't want to rewrite the site to use CSS Variables. I was easily able to create a dark theme by adding some dynamic styles to a couple of components.
+Fundamentally, since we are using Javscript instead of preset CSS variables, we have the most flexibility for theming. We can tailor the response of each component to whatever the current theme is. This is a great fit for components that have functional differences between themes as well as for integrating a theming solution into an existing project. If you only really care about changing colors I would recommend the above approach of CSS Variables.
 
 The downside of this approach is that it is tedious. You'll have to add these checks, for each component. That's # of themes multiplied by # of variants! Yikes!
 
@@ -300,6 +300,30 @@ The downside of this approach is that it is tedious. You'll have to add these ch
 ```
 
 Another consideration is performance. Since we are using Javascript, a mountain of these conditional checks can add up if your app is complex.
+
+## Bonus: Changing the Color of a Phone's Notifcation Bar
+
+Simply set the `theme-color` property. You can use a library like [Helmet](https://github.com/nfl/react-helmet) to simplify this.
+
+```jsx
+<meta
+  name="theme-color"
+  content={
+    isDarkMode
+      ? "black"
+      :  "white"
+  }
+/>
+              // or
+<Helmet
+  meta={[
+    {
+      name: "theme-color",
+      content: isDarkMode ? "black" : "white",
+    },
+  ]}
+/>
+```
 
 ## Summary
 
