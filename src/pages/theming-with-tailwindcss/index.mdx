@@ -1,7 +1,7 @@
 import image from "./card.jpg";
 import darkAirbnb from "./dark-airbnb.png";
 import lightAirbnb from "./light-airbnb.png";
-import ToggleWithContext from "./ToggleWithContext";
+import ToggleWithContext from "@/components/header/ToggleWithContext";
 import Img from "react-optimized-image";
 
 export const meta = {
@@ -12,7 +12,6 @@ export const meta = {
 };
 
 Theming is a commonly desired feature which can be tricky to implement. For this reason, many CSS frameworks have built-in opinionated theming solutions such as [styled-components](https://styled-components.com/docs/advanced#theming).
-
 In this article we will explore the different solutions for theming, ranging from static [CSS Variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) to truly dynamic JS. We'll evaluate the tradeoffs of each solution and leave with a better understanding of CSS as well as theming solutions offered by different frameworks.
 
 Along the way we'll see how we can use these techniques to implement a theming solution for a [TailwindCSS](https://tailwindcss.com/) project.
