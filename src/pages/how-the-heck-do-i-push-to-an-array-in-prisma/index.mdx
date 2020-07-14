@@ -1,0 +1,69 @@
+import image from "./card.jpg";
+
+export const meta = {
+  title: "How the heck do I push to an array in Prisma?",
+  description: `This question doesn't really make sense. No wonder there's no documentation on it!`,
+  date: "2020-07-13 18:39:16",
+  image,
+};
+
+I have a confession. I've never used SQL in a project before. Sure, I've written a couple of SQL statements to grab some data and understand the basics but, like most newbie Web developers, the first database I used was MongoDB.
+
+You might think that aside from the ACID guarantees and generic tradeoffs you get between SQL and NoSQL you don't really need to think any deeper on the differences when working on small projects. After all, all you need is simple CRUD and both should offer it, right?
+
+And that's why I was stuck when I couldn't find out how to push to an array in [Prisma](https://www.prisma.io/). Here's why this question doesn't make sense.
+
+<!--more-->
+
+## The Problem
+
+Do a quick google search for how to push to an array in MongoDB/Mongoose and you'll find dozens of Stackoverflow posts in addition to the documentation that will clearly outline how to do so. Do the same in Prisma and you'll turn up short. You'll start to doubt yourself:
+
+> _Am I not looking up the right terms? Is the documentation out of date? Are people truly not having this problem?_
+
+_Shouldn't Prisma have a push interface like in [Mongoose](https://mongoosejs.com/docs/api/array.html#mongoosearray_MongooseArray-push)?_
+
+```js
+// How to push to a mongoose array
+const schema = Schema({ nums: [Number] });
+const Model = mongoose.model("Test", schema);
+
+const doc = await Model.create({ nums: [3, 4] });
+doc.nums.push(5); // Add 5 to the end of the array
+await doc.save();
+```
+
+## The Misconception
+
+Whenever I'm in this situation, I've learned from experience that if something truly doesn't make sense to you, then you truly don't understand something fundamental. In this case, it was that, in Prisma, there are no interfaces to manipulate arrays. This is because there are no arrays; this question doesn't make sense! Unlike MongoDB, which is a document store and supports the operations that you would expect from objects, Prisma, if used with a SQL database, is operating with the interface of that database.
+
+## The Aha Moment
+
+By thinking about what I was actually doing under the hood and not just seeing Prisma as a CRUD interface, I had my aha moment. Let's say I have a user which can have many "friends" who are also users, a 1 to many relationship. If you were used to an object-based data model like in MongoDB, then you might think that I'll have a `User` object which has a list of `User` objects. This, of course, is not how it is done in SQL. Instead, the relationship is captured implicitly by having a foreign key to the user for each friend. You can find more info on modeling relations in SQL in this concise [Stackoverflow post](https://stackoverflow.com/questions/7296846/how-to-implement-one-to-one-one-to-many-and-many-to-many-relationships-while-de). Thus, if I want to get my list of friends given a user I query all friends that have a foreign key to that user.
+
+Assuming our user has an ID of zero, in Prisma we can query their friends like this:
+
+```js
+const friends = await prisma.user.findMany({
+  where: { user: { id: 0 } },
+});
+```
+
+And we can ~~push~~ **add a relation** to a friend with id of 1 like this:
+
+```js
+const user = await prisma.user.update({
+  where: { id: 0 },
+  data: {
+    friends: {
+      connect: { id: 1 },
+    },
+  },
+});
+```
+
+## Summary
+
+I have to admit, that was pretty embarrassing but such is learning! It's lessons like these that continue to keep me humble and remind me:
+
+> _If something truly doesn't make sense to you, then you truly don't understand something fundamental._

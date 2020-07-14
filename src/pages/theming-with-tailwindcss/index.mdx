@@ -1,0 +1,306 @@
+import image from "./card.jpg";
+import darkAirbnb from "./dark-airbnb.png";
+import lightAirbnb from "./light-airbnb.png";
+import ToggleWithContext from "./ToggleWithContext";
+import Img from "react-optimized-image";
+
+export const meta = {
+  title: "Theming with TailwindCSS",
+  description: `Exploring general solutions for theming and how they can be implemented with TailwindCSS`,
+  date: "2020-07-13 18:17:59",
+  image,
+};
+
+Theming is a commonly desired feature which can be tricky to implement. For this reason, many CSS frameworks have built-in opinionated theming solutions such as [styled-components](https://styled-components.com/docs/advanced#theming).
+
+In this article we will explore the different solutions for theming, ranging from static [CSS Variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) to truly dynamic JS. We'll evaluate the tradeoffs of each solution and leave with a better understanding of CSS as well as theming solutions offered by different frameworks.
+
+Along the way we'll see how we can use these techniques to implement a theming solution for a [TailwindCSS](https://tailwindcss.com/) project.
+
+<!--more-->
+
+## The Final Product
+
+You may have noticed the dark mode toggle already in the header of this blog.
+
+It looks something like this:
+
+<div className="flex justify-center">
+  <ToggleWithContext />
+</div>
+
+> Go ahead and click it! What do you notice?
+
+1. Toggles dark theme (I hope 😅).
+
+2. The state of the toggle in the header and the toggle above are synced! We are storing the state in [React Context](https://reactjs.org/docs/context.html).
+
+3. Refresh the page, the selected theme should not reset! We are persisting the state in the [browser's localstorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
+
+4. Open up the Console Developer Tools and clear the local storage: `localstorage.clear()`. Refresh your browser. If you've turned on dark mode for your browser or OS, it should start in dark mode. We are using a [media query](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) to determine this preference.
+
+5. Keep the Console Developer Tools open and examine the DOM, keep toggling the switch, you should notice `class="dark"` being toggled on the root `html` element.
+
+The observations above give us a good hint to how this site implemented its dark mode feature. Without further ado, let's jump in.
+
+## A Simple Solution: CSS Variables
+
+Say we want two themes as well as dark mode variant for each of them.
+
+```css
+/* themes.css */
+/* themes() is specific to Tailwind and just grabs the default Tailwind config */
+.theme-white-black {
+  --color-primary-900: theme("colors.gray.900");
+  --color-primary-800: #212736;
+  --color-secondary-900: theme("colors.white");
+  --color-secondary-800: #f6f7f8;
+}
+.theme-white-black.dark {
+  --color-primary-900: theme("colors.white");
+  --color-primary-800: #f6f7f8;
+  --color-secondary-900: theme("colors.gray.900");
+  --color-secondary-800: #212736;
+}
+.theme-airbnb {
+  --color-primary-900: theme("colors.gray.900");
+  --color-primary-800: #212736;
+  --color-secondary-900: theme("colors.white");
+  --color-secondary-800: #f6f7f8;
+}
+.theme-airbnb.dark {
+  --color-primary-900: theme("colors.white");
+  --color-primary-800: #f6f7f8;
+  --color-secondary-900: theme("colors.red.600");
+  --color-secondary-800: theme("colors.red.500");
+}
+
+/* Tailwind can generate these for you so this is not required but it's good to know that it's just good ol' css variables*/
+/* Again, if you using Tailwind you will NOT have to manually make these classes */
+.text-primary-900 {
+  color: var(--color-primary-900);
+}
+.bg-primary-900 {
+  color: var(--color-primary-900);
+}
+.text-secondary-900 {
+  color: var(--color-secondary-900);
+}
+.bg-secondary-900 {
+  background-color: var(--color-secondary-900);
+}
+/* ... Repeat for 800 shades */
+```
+
+Don't forget to include your file in your global stylesheet. For Tailwind it would look like this:
+
+```css
+/* index.css */
+@import "./theme.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+Then just use them like normal styles (which they are!).
+
+```jsx
+<div className="text-primary-900 bg-secondary-900"></div>
+```
+
+In Tailwind, this mapping is simplified as Tailwind will generate all the classes for you. Just make sure you add them to your `tailwind.config.js`. Check the [Tailwind Docs](https://tailwindcss.com/docs/customizing-colors) for more info.
+
+```js
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          "900": "var(--color-primary-900)",
+          "800": "var(--color-primary-800)",
+        },
+        secondary: {
+          "900": "var(--color-secondary-900)",
+          "800": "var(--color-secondary-800)",
+        },
+      },
+    },
+  },
+};
+```
+
+And that's it! Since your styles point to CSS Variables, all we need to do is find a way to change those CSS Variables.
+
+### Changing CSS Variables
+
+We've structured our CSS Variables such that they are contained within classes. This will allow us to change our CSS Variables but simply adding and removing the desired class from the root element. For example, let's say we want `theme-airbnb` in dark mode. We can simply add the classes `theme-airbnb` and `dark` to the root element. If you want to see this in action, check out my [personal site](https://engbrianlee.netlify.app/)
+
+<Img src={lightAirbnb} alt="Light Theme" />
+<Img src={darkAirbnb} alt="Dark Theme" />
+
+We can then use some Javascript to change the classes. Here an example of a full-on dark mode theming solution used on this blog. This only deals with adding the dark mode class but it can be easily extended for theme classes as well.
+
+_Note: This site uses NextJS and thus you will see some checks to ensure that pre-rendering doesn't affect our theming solution._
+
+```jsx
+import React, { useState, useEffect, useContext } from "react";
+
+const DARK_MODE_CLASS_NAME = "dark";
+
+const removeDarkMode = () => {
+  document.documentElement.classList.remove(DARK_MODE_CLASS_NAME);
+};
+const addDarkMode = () => {
+  document.documentElement.classList.add(DARK_MODE_CLASS_NAME);
+};
+
+// Always returns false on server side, (no way to get local storage or media query)
+const prefersDarkMode = () =>
+  (typeof window !== "undefined" && localStorage.getItem("isDarkMode")) ===
+    "true" ||
+  ((typeof window !== "undefined" && localStorage.getItem("isDarkMode")) ===
+    null &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+const useDarkMode = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // We need to do this client side and not in the state init above.
+  // This is because when pre-rendering the page, prefersDarkMode will always be false
+  // since there is not way to get local storage or do a media query.
+  // Since the page that is pre-rendered has prefersDarkMode false
+  // the light theme styles will be pre-rendered and given to the client.
+  // On the client, this hook will run but this time prefersDarkMode will potentially
+  // return true. Thus the final page could contain both dark and light theme styles.
+  // A easy fix is to always prerender the page with isDarkMode false (pre-renders
+  // light-theme styles) and do the check after the first render of the component
+
+  useEffect(() => {
+    setIsDarkMode(prefersDarkMode());
+  }, []);
+
+  // Save to local storage the user preference
+  useEffect(
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.setItem("isDarkMode", isDarkMode),
+    [isDarkMode]
+  );
+  useEffect(() => {
+    if (isDarkMode) {
+      addDarkMode();
+    } else {
+      removeDarkMode();
+    }
+  }, [isDarkMode]);
+
+  return {
+    toggleDarkMode: () => setIsDarkMode((isDarkMode) => !isDarkMode),
+    isDarkMode,
+  };
+};
+
+const ThemeContext = React.createContext();
+export const ThemeProvider = ({ children }) => {
+  const { toggleDarkMode, isDarkMode } = useDarkMode();
+  return (
+    <ThemeContext.Provider
+      value={{
+        toggleDarkMode,
+        isDarkMode,
+      }}
+    >
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+export default ThemeContext;
+```
+
+Remember the toggle switch above we played around with? It simply calls `toggleDarkMode` which is provided by our context.
+
+```jsx
+import React, { useContext } from "react";
+import ThemeContext from "@/css/theme";
+import moon from "@/components/header/moon.png";
+import sun from "@/components/header/sun.png";
+import Toggle from "react-toggle";
+
+export default function ToggleWithContext() {
+  const { toggleDarkMode, isDarkMode } = useContext(ThemeContext);
+  return (
+    <Toggle
+      icons={{
+        checked: (
+          <img
+            src={moon}
+            width="16"
+            height="16"
+            role="presentation"
+            style={{ pointerEvents: "none", margin: "0px" }}
+          />
+        ),
+        unchecked: (
+          <img
+            src={sun}
+            width="16"
+            height="16"
+            role="presentation"
+            style={{ pointerEvents: "none", margin: "0px" }}
+          />
+        ),
+      }}
+      checked={isDarkMode}
+      onChange={() => toggleDarkMode()}
+    />
+  );
+}
+```
+
+## A Flexible but Tedious Solution: Dynamic Styles
+
+```jsx
+<nav
+  className={`text-sm text-center font-light space-y-4 pt-4 md:space-y-2 md:pt-0
+    ${isDarkMode ? "text-gray-200" : "text-gray-700"}`
+  }
+>
+{/*equivalent but using the more readable & scalable classnames package*/}
+<nav
+  className={classNames(
+    "text-sm text-center font-light space-y-4 pt-4 md:space-y-2 md:pt-0",
+    isDarkMode ? "text-gray-200" : "text-gray-700"
+  )}
+>
+```
+
+We can change styles with some simple checks. I recommend using the [classnames](https://www.npmjs.com/package/classnames) module as you will find creating template literals pretty unreadable as you add more variables.
+
+Fundamentally, since we use pure Javascript, we have the most flexibility. We can tailor the response of each component to whatever the current theme is. This is a great fit for components that have functional differences between themes as well as for integrating a theming solution into an existing project. If you only really care about changing colors I would recommend the above approach of CSS Variables.
+
+This was the approach taken for this site as it was forked from the [TailwindCSS Blog](https://github.com/tailwindcss/blog) and I didn't want to rewrite the site to use CSS Variables. I was easily able to create a dark theme by adding some dynamic styles to a couple of components.
+
+The downside of this approach is that it is tedious. You'll have to add these checks, for each component. That's # of themes multiplied by # of variants! Yikes!
+
+```jsx
+// This gets out of hand pretty quickly....
+<nav
+  className={classNames(
+    "text-sm text-center font-light space-y-4 pt-4 md:space-y-2 md:pt-0",
+    {
+      "text-gray-200": currentTheme == "gray" && !isDarkMode,
+      "text-gray-700": currentTheme == "gray" && isDarkMode,
+      "text-red-200": currentTheme == "red" && !isDarkMode,
+      "text-red-200": currentTheme == "red" && isDarkMode,
+    }
+  )}
+>
+```
+
+Another consideration is performance. Since we are using Javascript, a mountain of these conditional checks can add up if your app is complex.
+
+## Summary
+
+As is the case for most engineering problems, there is no perfect solution! If you're starting a new project and only need to change colors I would recommend using CSS Variables. If you need flexibility, use dynamic styles. You may even have to use a mixture of both, it really depends on what you are trying to do.
