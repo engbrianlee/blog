@@ -26,7 +26,7 @@ export default function Home() {
           content={`https://blog.engbrianlee.vercel.app${twitterCard}`}
         />
         <meta property="og:url" content="https://blog.engbrianlee.vercel.app" />
-        <meta property="og:type" content="article" />
+        <meta property="og:type" content="website" />
         <meta property="og:title" content="ebl blog" />
         <meta property="og:description" content="ebl blog" />
         <meta
