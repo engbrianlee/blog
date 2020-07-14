@@ -53,7 +53,7 @@ const Footer = ({ className }) => {
         <p>
           Check out my{" "}
           <a
-            href="https://engbrianlee.netlify.app/"
+            href="https://engbrianlee.vercel.app/"
             className={classNames(
               "underline",
               isDarkMode ? "hover:text-white" : "hover:text-gray-900"
