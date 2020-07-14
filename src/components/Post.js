@@ -46,18 +46,18 @@ export default function Post({ meta, children, posts }) {
         <meta name="twitter:description" content={meta.description} />
         <meta
           name="twitter:image"
-          content={`https://blog-engbrianlee.netlify.app${meta.image}`}
+          content={`https://blog.engbrianlee.vercel.app${meta.image}`}
         />
         <meta
           property="og:url"
-          content={`https://blog-engbrianlee.netlify.app${router.pathname}`}
+          content={`https://blog.engbrianlee.vercel.app${router.pathname}`}
         />
         <meta property="og:type" content="article" />
         <meta property="og:title" content={`${meta.title} – ebl blog`} />
         <meta property="og:description" content={meta.description} />
         <meta
           property="og:image"
-          content={`https://blog-engbrianlee.netlify.app${meta.image}`}
+          content={`https://blog.engbrianlee.vercel.app${meta.image}`}
         />
       </Head>
       <header className="pb-5 lg:pt-6 lg:pb-10">

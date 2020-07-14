@@ -23,18 +23,15 @@ export default function Home() {
         <meta name="twitter:description" content="ebl blog" />
         <meta
           name="twitter:image"
-          content={`https://blog-engbrianlee.netlify.app${twitterCard}`}
+          content={`https://blog.engbrianlee.vercel.app${twitterCard}`}
         />
-        <meta
-          property="og:url"
-          content="https://blog-engbrianlee.netlify.app"
-        />
+        <meta property="og:url" content="https://blog.engbrianlee.vercel.app" />
         <meta property="og:type" content="article" />
         <meta property="og:title" content="ebl blog" />
         <meta property="og:description" content="ebl blog" />
         <meta
           property="og:image"
-          content={`https://blog-engbrianlee.netlify.app${twitterCard}`}
+          content={`https://blog.engbrianlee.vercel.app${twitterCard}`}
         />
         <title>ebl blog</title>
       </Head>
