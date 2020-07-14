@@ -303,18 +303,20 @@ Another consideration is performance. Since we are using Javascript, a mountain 
 
 ## Bonus: Changing the Color of a Phone's Notifcation Bar
 
-Simply set the `theme-color` property. You can use a library like [Helmet](https://github.com/nfl/react-helmet) to simplify this.
+Simply create a `<meta>` tag with the property `theme-color`. You can use a library like [Helmet](https://github.com/nfl/react-helmet) to simplify this.
 
 ```jsx
-<meta
-  name="theme-color"
-  content={
-    isDarkMode
-      ? "black"
-      :  "white"
-  }
-/>
-              // or
+<head>
+  <meta
+    name="theme-color"
+    content={
+      isDarkMode
+        ? "black"
+        :  "white"
+    }
+  />
+</head>
+// Or
 <Helmet
   meta={[
     {
