@@ -67,6 +67,11 @@ module.exports = {
             img: {
               borderRadius: theme("borderRadius.md"),
             },
+            video: {
+              borderRadius: theme("borderRadius.md"),
+              marginRight: "auto",
+              marginLeft: "auto",
+            },
           },
         },
         dark: {
